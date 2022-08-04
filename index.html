@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Pong</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <canvas id="canvas"></canvas>
+    <script src="pong.js"></script>
+    <script>
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        function autoResizeCanvas(canvas) {
+            windowWidth = window.innerWidth;
+            windowHeight = window.innerHeight;
+            if (windowWidth > windowHeight) {
+                canvas.width = windowHeight;
+                canvas.height = windowHeight;
+            } else {
+                canvas.width = windowWidth;
+                canvas.height = windowWidth;
+            }
+        }
+        // window.addEventListener('load', () => {autoResizeCanvas(canvas)});
+        // window.addEventListener('resize', () => {autoResizeCanvas(canvas)});
+        const ball = new Ball(canvas.width / 2, canvas.height / 2, 5, 'white', ctx);
+        ball.draw();
+    </script>
+</body>
+</html>
