@@ -6,12 +6,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="stylesheet" href="style.css">
 </head>
-<body>
-    <canvas id="canvas"></canvas>
+<body onload="startGame()">
+    <canvas id="canvas" height="500" width="500"></canvas><br>
+    <button id="start" onclick="startGame()">Start</button>
     <script src="pong.js"></script>
     <script>
-        const canvas = document.getElementById('canvas');
-        const ctx = canvas.getContext('2d');
         function autoResizeCanvas(canvas) {
             windowWidth = window.innerWidth;
             windowHeight = window.innerHeight;
@@ -25,8 +24,6 @@
         }
         // window.addEventListener('load', () => {autoResizeCanvas(canvas)});
         // window.addEventListener('resize', () => {autoResizeCanvas(canvas)});
-        const ball = new Ball(canvas.width / 2, canvas.height / 2, 5, 'white', ctx);
-        ball.draw();
     </script>
 </body>
 </html>
