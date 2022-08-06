@@ -45,8 +45,13 @@ class Ball extends Component {
     // the ball is a square with a size of 10x10
     constructor(x, y, color, ctx) {
         super(x, y, color, ctx);
+    }
+
+    serve() {
+        this.x = 245;
+        this.y = 245;
         this.speedX = 3;
-        this.speedY = 3;
+        this.speedY = getRandomIntInclusive(-3, 3);
     }
 }
 
@@ -65,6 +70,37 @@ class Paddle extends Component {
         super(x, y, color, ctx);
         this.height = 100;
         this.width = 10;
+    }
+}
+
+
+class Scoreboard {
+    constructor(ctx) {
+        this.ctx = ctx;
+        this.score1 = 0;
+        this.score2 = 0;
+    }
+
+    update() {
+        this.ctx.font = "50px Arial";
+        this.ctx.fillStyle = "white";
+        this.ctx.fillText(this.score1, 185, 50);
+        this.ctx.fillText(this.score2, 285, 50);
+    }
+}
+
+class MiddleLine {
+    constructor(ctx) {
+        this.ctx = ctx;
+    }
+
+    update() {
+        this.ctx.beginPath();
+        this.ctx.setLineDash([10, 10]);
+        this.ctx.moveTo(250, 0);
+        this.ctx.lineTo(250, 500);
+        this.ctx.strokeStyle = "white";
+        this.ctx.stroke();
     }
 }
 
@@ -100,18 +136,20 @@ function updateGameArea() {
     gameArea.clear();
     paddle1.speedY = 0;
     paddle2.speedY = 0;
-    if (gameArea.keys["ArrowUp"]) {
+    // keyboard controls
+    if (gameArea.keys["W"] || gameArea.keys["w"]) {
         paddle1.speedY = -3;
     }
-    if (gameArea.keys["ArrowDown"]) {
+    if (gameArea.keys["S"] || gameArea.keys["s"]) {
         paddle1.speedY = 3;
     }
-    if (gameArea.keys["w"]) {
+    if (gameArea.keys["ArrowUp"]) {
         paddle2.speedY = -3;
     }
-    if (gameArea.keys["s"]) {
+    if (gameArea.keys["ArrowDown"]) {
         paddle2.speedY = 3;
     }
+    // collision detection
     if (ball.crashWith(paddle1)) {
         ball.speedX = -ball.speedX;
     }
@@ -136,23 +174,56 @@ function updateGameArea() {
     if (paddle2.crashWith(obstacle2)) {
         paddle2.y = 390;
     }
+    checkScore();
+    // update objects
     obstacle1.update();
     obstacle2.update();
-    paddle2.newPos();
-    paddle2.update();
     paddle1.newPos();
     paddle1.update();
+    paddle2.newPos();
+    paddle2.update();
     ball.newPos();
     ball.update();
+    scoreboard.update();
+    middleLine.update();
+
 }
 
 function startGame() {
     gameArea.start();
+    ball.serve();
+}
+
+function checkScore() {
+    if (ball.x < 0) {
+        scoreboard.score2 += 1;
+        ball.serve();
+    }
+    if (ball.x > 490) {
+        scoreboard.score1 += 1;
+        ball.serve();
+    }
+    if (scoreboard.score1 == 10) {
+        gameArea.stop();
+        alert("Player 1 wins!");
+    }
+    if (scoreboard.score2 == 10) {
+        gameArea.stop();
+        alert("Player 2 wins!");
+    }
+}
+
+function getRandomIntInclusive(min, max) {
+    min = Math.ceil(min);
+    max = Math.floor(max);
+    return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
 const gameArea = new GameArea();
 const ball = new Ball(245, 245, "white", gameArea.ctx);
-const paddle1 = new Paddle(450, 200, "white", gameArea.ctx);
-const paddle2 = new Paddle(40, 200, "white", gameArea.ctx);
+const paddle1 = new Paddle(40, 200, "white", gameArea.ctx);
+const paddle2 = new Paddle(450, 200, "white", gameArea.ctx);
 const obstacle1 = new Obstacle(0, 0, "grey", gameArea.ctx);
 const obstacle2 = new Obstacle(0, 490, "grey", gameArea.ctx);
+const scoreboard = new Scoreboard(gameArea.ctx);
+const middleLine = new MiddleLine(gameArea.ctx);
