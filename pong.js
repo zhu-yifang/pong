@@ -138,16 +138,16 @@ function updateGameArea() {
     paddle2.speedY = 0;
     // keyboard controls
     if (gameArea.keys["W"] || gameArea.keys["w"]) {
-        paddle1.speedY = -3;
+        paddle1.speedY = -4;
     }
     if (gameArea.keys["S"] || gameArea.keys["s"]) {
-        paddle1.speedY = 3;
+        paddle1.speedY = 4;
     }
     if (gameArea.keys["ArrowUp"]) {
-        paddle2.speedY = -3;
+        paddle2.speedY = -4;
     }
     if (gameArea.keys["ArrowDown"]) {
-        paddle2.speedY = 3;
+        paddle2.speedY = 4;
     }
     // collision detection
     if (ball.crashWith(paddle1)) {
