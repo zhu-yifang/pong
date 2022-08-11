@@ -1,9 +1,15 @@
+const express = require('express');
+const app = express();
+const http = require('http');
+const server = http.createServer(app);
+const { Server } = require("socket.io");
+const io = new Server(server);
+
 class Component {
-    constructor(x, y, color, ctx) {
+    constructor(x, y, color) {
         this.x = x;
         this.y = y;
         this.color = color;
-        this.ctx = ctx;
         // speed in pixels per frame
         this.speedX = 0;
         this.speedY = 0;
@@ -16,11 +22,6 @@ class Component {
         this.y += this.speedY;
     }
 
-    update() {
-        this.ctx.fillStyle = this.color;
-        this.ctx.fillRect(this.x, this.y, this.width, this.height);
-    }
-
     crashWith(otherboj) {
         let myleft = this.x;
         let myright = this.x + this.width;
@@ -31,6 +32,7 @@ class Component {
         let othertop = otherboj.y;
         let otherbottom = otherboj.y + otherboj.height;
         let crash = true;
+        // collision detection
         if ((mybottom < othertop) ||
             (mytop > otherbottom) ||
             (myright < otherleft) ||
@@ -43,112 +45,78 @@ class Component {
 
 class Ball extends Component {
     // the ball is a square with a size of 10x10
-    constructor(x, y, color, ctx) {
-        super(x, y, color, ctx);
+    constructor(x, y, color) {
+        super(x, y, color);
     }
 
     serve() {
         this.x = 245;
         this.y = 245;
         this.speedX = 3;
-        this.speedY = getRandomIntInclusive(-3, 3);
+        this.speedY = 0;
     }
 }
 
 class Obstacle extends Component {
-    constructor(x, y, color, ctx) {
-        super(x, y, color, ctx);
+    constructor(x, y, color) {
+        super(x, y, color);
         this.width = 500;
         this.height = 10;
     }
-
 }
 
 class Paddle extends Component {
     // the paddle is a rectangle with a size of 10x100
-    constructor(x, y, color, ctx) {
-        super(x, y, color, ctx);
+    constructor(x, y, color) {
+        super(x, y, color);
         this.height = 100;
         this.width = 10;
     }
 }
 
-
 class Scoreboard {
-    constructor(ctx) {
-        this.ctx = ctx;
+    constructor() {
         this.score1 = 0;
         this.score2 = 0;
-    }
-
-    update() {
-        this.ctx.font = "50px Arial";
-        this.ctx.fillStyle = "white";
-        this.ctx.fillText(this.score1, 185, 50);
-        this.ctx.fillText(this.score2, 285, 50);
-    }
-}
-
-class MiddleLine {
-    constructor(ctx) {
-        this.ctx = ctx;
-    }
-
-    update() {
-        this.ctx.beginPath();
-        this.ctx.setLineDash([10, 10]);
-        this.ctx.moveTo(250, 0);
-        this.ctx.lineTo(250, 500);
-        this.ctx.strokeStyle = "white";
-        this.ctx.stroke();
     }
 }
 
 class GameArea {
     constructor() {
-        this.canvas = document.getElementById("canvas");
-        this.ctx = this.canvas.getContext("2d");
-        this.width = this.canvas.width;
-        this.height = this.canvas.height;
+        this.width = 500;
+        this.height = 500;
         this.keys = [];
     }
 
     start() {
-        this.interval = setInterval(updateGameArea, 20);
-        window.addEventListener('keydown', (e) => {
-            this.keys[e.key] = true;
-        });
-        window.addEventListener('keyup', (e) => {
-            this.keys[e.key] = false;
-        });
+        this.interval = setInterval(updateGameArea, 20, this.keys);
     }
 
     stop() {
         clearInterval(this.interval);
     }
-
-    clear() {
-        this.ctx.clearRect(0, 0, this.width, this.height);
-    }
 }
 
-function updateGameArea() {
-    gameArea.clear();
+function updateGameArea(keys) {
     paddle1.speedY = 0;
     paddle2.speedY = 0;
     // keyboard controls
-    if (gameArea.keys["W"] || gameArea.keys["w"]) {
+    if (keys["W"] || keys["w"]) {
         paddle1.speedY = -4;
     }
-    if (gameArea.keys["S"] || gameArea.keys["s"]) {
+    if (keys["S"] || keys["s"]) {
         paddle1.speedY = 4;
     }
-    if (gameArea.keys["ArrowUp"]) {
+    if (keys["ArrowUp"]) {
         paddle2.speedY = -4;
     }
-    if (gameArea.keys["ArrowDown"]) {
+    if (keys["ArrowDown"]) {
         paddle2.speedY = 4;
     }
+    // update objects positions
+    paddle1.newPos();
+    paddle2.newPos();
+    ball.newPos();
     // collision detection
     if (ball.crashWith(paddle1)) {
         ball.speedX = -ball.speedX;
@@ -175,18 +143,13 @@ function updateGameArea() {
         paddle2.y = 390;
     }
     checkScore();
-    // update objects
-    obstacle1.update();
-    obstacle2.update();
-    paddle1.newPos();
-    paddle1.update();
-    paddle2.newPos();
-    paddle2.update();
-    ball.newPos();
-    ball.update();
-    scoreboard.update();
-    middleLine.update();
-
+    // send updated game state to client
+    io.emit('update', {
+        paddle1: paddle1,
+        paddle2: paddle2,
+        ball: ball,
+        score: scoreboard
+    });
 }
 
 function startGame() {
@@ -205,11 +168,9 @@ function checkScore() {
     }
     if (scoreboard.score1 == 10) {
         gameArea.stop();
-        alert("Player 1 wins!");
     }
     if (scoreboard.score2 == 10) {
         gameArea.stop();
-        alert("Player 2 wins!");
     }
 }
 
@@ -220,10 +181,39 @@ function getRandomIntInclusive(min, max) {
 }
 
 const gameArea = new GameArea();
-const ball = new Ball(245, 245, "white", gameArea.ctx);
-const paddle1 = new Paddle(40, 200, "white", gameArea.ctx);
-const paddle2 = new Paddle(450, 200, "white", gameArea.ctx);
-const obstacle1 = new Obstacle(0, 0, "grey", gameArea.ctx);
-const obstacle2 = new Obstacle(0, 490, "grey", gameArea.ctx);
-const scoreboard = new Scoreboard(gameArea.ctx);
-const middleLine = new MiddleLine(gameArea.ctx);
+const ball = new Ball(245, 245, "white");
+const paddle1 = new Paddle(40, 200, "white");
+const paddle2 = new Paddle(450, 200, "white");
+const obstacle1 = new Obstacle(0, 0, "grey");
+const obstacle2 = new Obstacle(0, 490, "grey");
+const scoreboard = new Scoreboard();
+
+app.use(express.static('public'));
+
+app.get('/', (req, res) => {
+    res.sendFile(__dirname + '/index.html');
+});
+
+server.listen(3000, () => {
+    console.log('Server listening on port 3000');
+});
+
+io.on('connection', (socket) => {
+    console.log('a user connected');
+    socket.on('disconnect', () => {
+        console.log('user disconnected');
+    });
+});
+
+io.on('connection', (socket) => {
+    socket.on('start', () => {
+        console.log('Game start');
+        startGame();
+    });
+    socket.on('keydown', (key) => {
+        gameArea.keys[key] = true;
+    });
+    socket.on('keyup', (key) => {
+        gameArea.keys[key] = false;
+    });
+});

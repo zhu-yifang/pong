@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Pong</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <canvas id="canvas" height="500" width="500"></canvas><br>
+    <button id="start" onclick="start()">Start</button>
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        // client code
+        let socket = io();
+        const startBtn = document.getElementById("start");
+        const canvas = document.getElementById("canvas");
+        const ctx = canvas.getContext("2d");
+
+        function start() {
+            socket.emit("start");
+        }
+
+        // function to draw ball, paddles, and obstacles
+        function drawObj(obj) {
+            ctx.fillStyle = obj.color;
+            ctx.fillRect(obj.x, obj.y, obj.width, obj.height);
+        }
+
+        function drawScoreboard(score) {
+            ctx.font = "50px Arial";
+            ctx.fillStyle = "white";
+            ctx.fillText(score.score1, 185, 50);
+            ctx.fillText(score.score2, 285, 50);
+        }
+
+        function drawMiddleLine() {
+            ctx.beginPath();
+            ctx.setLineDash([10, 10]);
+            ctx.moveTo(250, 0);
+            ctx.lineTo(250, 500);
+            ctx.strokeStyle = "white";
+            ctx.stroke();
+        }
+
+        function drawObstacle() {
+            drawObj({
+                color : "white",
+                x : 0, 
+                y : 0,
+                width : 500,
+                height : 10
+            })
+            drawObj({
+                color : "white",
+                x : 0, 
+                y : 490,
+                width : 500,
+                height : 10
+            })
+        }
+
+        function draw() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            drawMiddleLine();
+            drawObstacle();
+            drawScoreboard(score);
+            drawObj(ball);
+            drawObj(paddle1);
+            drawObj(paddle2);
+        }
+
+        let ball;
+        let paddle1;
+        let paddle2;
+        let score;
+        socket.on("update", (data) => {
+            ball = data.ball;
+            paddle1 = data.paddle1;
+            paddle2 = data.paddle2;
+            score = data.score;
+            draw();
+        });
+        window.addEventListener("keydown", (e) => {
+            socket.emit("keydown", e.key);
+        });
+        window.addEventListener("keyup", (e) => {
+            socket.emit("keyup", e.key);
+        });
+        function autoResizeCanvas(canvas) {
+            windowWidth = window.innerWidth;
+            windowHeight = window.innerHeight;
+            if (windowWidth > windowHeight) {
+                canvas.width = windowHeight;
+                canvas.height = windowHeight;
+            } else {
+                canvas.width = windowWidth;
+                canvas.height = windowWidth;
+            }
+        }
+
+        // window.addEventListener('load', () => {autoResizeCanvas(canvas)});
+        // window.addEventListener('resize', () => {autoResizeCanvas(canvas)});
+    </script>
+</body>
+
+</html>
