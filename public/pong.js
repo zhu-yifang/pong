@@ -61,7 +61,6 @@ class Obstacle extends Component {
         this.width = 500;
         this.height = 10;
     }
-
 }
 
 class Paddle extends Component {

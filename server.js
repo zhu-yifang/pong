@@ -53,7 +53,7 @@ class Ball extends Component {
         this.x = 245;
         this.y = 245;
         this.speedX = 3;
-        this.speedY = 0;
+        this.speedY = getRandomIntInclusive(1, 4);
     }
 }
 
